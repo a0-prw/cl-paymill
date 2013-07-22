@@ -7,13 +7,11 @@
 
     :version "0.0.1"
     :author "Peter Wood, email: pete_wood at runbox.com"
-    :license "BSD"
+    :license "BSD, 2 clause."
     :depends-on (:drakma
                  :st-json 
                  :cl+ssl)
-    
     :serial t
     :components ((:file "package") 
-                 (:file "config")
                  (:file "build")
                  (:file "paymill")))

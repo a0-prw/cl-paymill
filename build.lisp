@@ -1,8 +1,45 @@
 (in-package :paymill)
 
+;;See https://www.paymill.com/ to get an account and test keys, etc.  Read
+;;their documentation to learn how to integrate their service into
+;;your website
+
+(defvar *paymill-private-test-key* "")
+(defvar *paymill-live-key* "")
+(defvar *paymill-key* *paymill-private-test-key*)
+
+(defvar *paymill-host* "api.paymill.com")
+
+;;Do not use this variable for anything it is used inside a macro.
 (defvar *pm-reply*)
 
-(defun x-www-form-encode-pairs (pairs)
+(defvar *cookie-jar* (make-instance 'drakma:cookie-jar))
+
+(defun clear-cookie-jar ()
+  (drakma:delete-old-cookies *cookie-jar*))
+
+(defun resource-from-keyword (keyword)
+  (string-downcase (symbol-name keyword)))
+
+(defun normalize-slot (sl)
+  (cond  ((keywordp sl)
+          (resource-from-keyword sl))
+         ((stringp sl) sl)
+         (t (error "Could not normalize slot: ~S" sl))))
+
+(defun slots (dotted &rest pairs)
+  (labels ((rec (rst &optional (ret nil))
+             (if (null rst) ret
+                 (let ((sl (normalize-slot (car rst)))
+                       (val (cadr rst)))
+                   (rec (cddr rst) (cons (if dotted 
+                                      (cons sl val)
+                                      (list sl val))
+                                  ret))))))
+    (apply #'rec pairs)))
+
+(defun x-www-form-encode-pairs (&rest pairs)
+  (setf pairs (apply #'slots `(nil ,@pairs)))
   (let ((string "")
         (more (< 1 (length pairs))))
     (loop for (var val) in pairs
@@ -16,6 +53,10 @@
 ;;to be correct.  However, presumably you are going to be
 ;;handling the errors according to condition class, so the reporting
 ;;function shouldn't matter in production code.
+
+;;In addition, there are MANY return codes internal to Paymill json
+;;objects which are returned from a call.  Your application should
+;;check these. See Paymill's documentation for details.
 
 (define-condition paymill-error (simple-error) 
   ((reply :initarg :reply :reader reply)
@@ -59,20 +100,12 @@
     (412 (error 'paymill-precondition-failed :reply reply :status status))
     (t (error 'paymill-general-error :reply reply :status status))))
 
-(define-condition api-internal-error (simple-error) 
-  ((caller :initarg :caller :reader caller)
-   (message :initarg :message :reader message))
-  (:report (lambda (c s)
-             (format s "~S signalled an error: ~A"
-                     (caller c) (message c)))))
-
-(defvar *cookie-jar* (make-instance 'drakma:cookie-jar))
-
-(defun clear-cookie-jar ()
-  (drakma:delete-old-cookies *cookie-jar*))
-
-(defun resource-from-keyword (keyword)
-  (string-downcase (symbol-name keyword)))
+;; (define-condition api-internal-error (simple-error) 
+;;   ((caller :initarg :caller :reader caller)
+;;    (message :initarg :message :reader message))
+;;   (:report (lambda (c s)
+;;              (format s "~S signalled an error: ~A"
+;;                      (caller c) (message c)))))
 
 (defmacro with-pm-request (request-form &body body)
   "Does error checking of the reply from Paymill resulting from
@@ -82,12 +115,15 @@
   appropriate error'."
   (let ((reply (gensym "RP"))
         (status (gensym "ST"))
+        (jso (gensym "JSO"))
         (tmp (gensym "TMP")))
      `(multiple-value-bind (,reply ,status)
           ,request-form
+        (setf (flexi-streams:flexi-stream-external-format ,reply) :utf-8)
         (if (= ,status 200)
-            (let* ((,tmp (st-json:getjso "data" ,reply))
-                   (*pm-reply* (if ,tmp ,tmp ,reply)))
+            (let* ((,jso (st-json:read-json ,reply))
+                   (,tmp (st-json:getjso "data" ,jso))
+                   (*pm-reply* (if ,tmp ,tmp ,jso)))
               ,@body)
             (signal-paymill-error ,status ,reply)))))
 
@@ -118,7 +154,7 @@ RESOURCE is the target."
 
 (defmacro define-resource-access (resource instr-list)
   "This macro defines a uniform way of defining access to Paymill API
-resources.  See paymill.lisp for usage."
+resources.  See README  for usage."
   (let ((access-name (intern (symbol-name resource) :paymill)))
     `(progn (defgeneric ,access-name (instruction &key &allow-other-keys))
             ,@(remove-if 
@@ -126,17 +162,18 @@ resources.  See paymill.lisp for usage."
                (loop for instr in instr-list
                   collect (cond ((eql instr :new)
                                  `(defmethod ,access-name
-                                      ((inst (eql :new)) &key  (data nil))
+                                      ((inst (eql :new)) &key (data nil))
                                     (with-pm-request
                                         (drakma:http-request (pm-uri ,resource)
                                                              :basic-authorization `(,',*paymill-key*) :method :post
-                                                             :parameters data :cookie-jar *cookie-jar* :want-stream t)
+                                                             :parameters (if data (apply #'slots `(t ,@data)) nil)
+                                                             :cookie-jar *cookie-jar* :want-stream t)
                                       (values (st-json:getjso "id" *pm-reply*)
                                               *pm-reply*))))
                                 
                                 ((eql instr :retrieve)
                                  `(defmethod ,access-name
-                                      ((inst (eql :get)) &key (id nil)) ;; &allow-other-keys)
+                                      ((inst (eql :retrieve)) &key (id nil)) ;; &allow-other-keys)
                                     (unless id
                                       (error "ID is required to retrieve a resource by identifier."))
                                     (with-pm-request
@@ -156,7 +193,7 @@ resources.  See paymill.lisp for usage."
                                       *pm-reply*)))
                                 ((eql instr :delete)
                                  `(defmethod ,access-name
-                                      ((inst (eql :delete)) &key (id nil));; (data nil))
+                                      ((inst (eql :delete)) &key (id nil))
                                     (unless id
                                       (error "ID must be supplied to DELETE a resource."))
                                     (with-pm-request
@@ -166,7 +203,7 @@ resources.  See paymill.lisp for usage."
                                       *pm-reply*)))
                                 ((eql instr :list)
                                  `(defmethod ,access-name
-                                      ((inst (eql :list)) &key (data nil) (slot nil) (ascending t))
+                                      ((inst (eql :list)) &key (slot nil) (ascending t))
                                     (let* ((qst (if slot (concatenate 'string "order="
                                                                       (string-downcase (symbol-name slot)) 
                                                                       (if ascending "_asc" "_desc")) ""))
