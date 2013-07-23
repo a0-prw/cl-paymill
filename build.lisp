@@ -34,7 +34,7 @@
                                       (cons sl val)
                                       (list sl val))
                                   ret))))))
-    (apply #'rec pairs)))
+    (rec pairs)))
 
 (defun x-www-form-encode-pairs (&rest pairs)
   (setf pairs (apply #'slots `(nil ,@pairs)))
