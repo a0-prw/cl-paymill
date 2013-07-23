@@ -30,7 +30,8 @@
 ;;*PAYMILL-KEY* needs to be set to your private test key for testing.  If you
 ;;set it to your live key - YOU WILL BE CHARGED FOR THE TRANSACTIONS.
 
-;;Until you call this function, the interface is not defined.
+;;Until you call INITIALIZE-PAYMILL, the interface is not defined.
+
 (defun initialize-paymill (key)
   "Call this function with your private test- or live-key to define
 access functions to the Paymill API.  If you use a live-key, you will
