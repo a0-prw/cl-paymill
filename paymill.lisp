@@ -3,7 +3,8 @@
 ;;*PAYMILL-KEY* needs to be set to your private test key for testing.  If you
 ;;set it to your live key - YOU WILL BE CHARGED FOR THE TRANSACTIONS.
 
-(defun use-key (key)
+;;Until you call this function, the interface is not defined.
+(defun initialize-paymill (key)
   "Call this function with your private test- or live-key to define
 access functions to the Paymill API.  If you use a live-key, you will
 be charged for any transactions which are made."
@@ -13,6 +14,5 @@ be charged for any transactions which are made."
   (define-resource-access :transactions (:new :update :retrieve :list))
   (define-resource-access :refunds (:refund :retrieve :list))
   (define-resource-access :offers (:new :update :retrieve :list :delete))
-  (define-resource-access :subscriptions (:new :retrieve :update :list :delete))
-  t)
+  (define-resource-access :subscriptions (:new :retrieve :update :list :delete)))
 
