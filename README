@@ -19,11 +19,11 @@ Put cl-paymill in a place where quicklisp
 (ql:quickload :cl-paymill)
 (pml:initialize-paymill "your private test key from paymill")
 
-And the package is installed and ready to use.
+And the package "PAYMILL" (nickname PML) is installed and ready to use.  
 
 USAGE:
 
-INITIALIZE-PAYMILL (KEY)
+PML:INITIALIZE-PAYMILL (KEY)
 
 KEY is a string which is your paymill key. This function setfs
 *paymill-key* to the string provided. Until you provide a valid key,
@@ -33,22 +33,22 @@ unless you want to get billed by Paymill.
 First some examples, then an explanation: 
 
 To create a new client, without an email or description:
-(clients :new)
+(pml:clients :new)
 
 To create a new client, with an email:
-(clients :new :data '(:email "joey@fubar.org"))
+(pml:clients :new :data '(:email "joey@fubar.org"))
 
 To update an existing client's email and description:
-(clients :update 
+(pml:clients :update 
          :id "client_xyz12345" 
          :data '(:email "joe@foo.org" :description "a lousy client"))
 
-You get the client ID as a return value from (clients :new).  See below.
+You get the client ID as a return value from (pml:clients :new).  See below.
 
 
 All access has this general form:
 
-RESOURCE (ACCESS-TYPE &KEY [ID] [DATA])
+PML:RESOURCE (ACCESS-TYPE &KEY [ID] [DATA])
 
 Where RESOURCE is a generic function, ACCESS-TYPE is a keyword, optional ID is
 a string, and optional DATA is a list (SLOT1 VALUE1 SLOT2 VALUE2 ...)
@@ -86,7 +86,8 @@ does so - read the Paymill API.  I am not using refunds, so ...
 Errors:
 
 If any call to paymill fails to result in a reply with status code
-200, an error is signalled:
+200, an error is signalled. Here are the conditions, exported from
+PAYMILL package, together with their status code:
 
  PAYMILL-BAD-REQUEST 400
  PAYMILL-UNAUTHORIZED 401
@@ -99,6 +100,11 @@ If any call to paymill fails to result in a reply with status code
 The error will be signalled from the macro which wraps the actual
 request, so don't think you can install an error handler by a :before
 method.  Sorry.
+
+The following resources are currently accessible, all exported from
+the PAYMILL package:
+
+CLIENTS, TRANSACTIONS, REFUNDS, PAYMENTS, SUBSCRIPTIONS, OFFERS
 
 Note:
 
