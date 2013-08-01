@@ -25,10 +25,11 @@ USAGE:
 
 PML:INITIALIZE-PAYMILL (KEY)
 
-KEY is a string which is your paymill key. This function setfs
-*paymill-key* to the string provided. Until you provide a valid key,
-all usage will result in access unathorized errors. Use your test-key,
-unless you want to get billed by Paymill.
+KEY is a string which is your paymill key. This macro defines the
+access functions to call the provided key. Until you call this macro
+with a key, the access functions will not be defined.  If you give it
+an invalid key all usage will result in access unathorized
+errors. Use your test-key, unless you want to get billed by Paymill.
 
 First some examples, then an explanation: 
 

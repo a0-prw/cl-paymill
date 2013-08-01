@@ -31,8 +31,6 @@
 ;;their documentation to learn how to integrate their service into
 ;;your website
 
-(defvar *paymill-key* "")
-
 (defvar *paymill-host* "api.paymill.com")
 
 ;;Do not use this variable for anything. It is bound inside a macro.
@@ -177,7 +175,7 @@ RESOURCE is the target."
                                     (resource-from-keyword resource))
                  :query query))
 
-(defmacro define-resource-access (resource instr-list)
+(defmacro define-resource-access (resource instr-list key)
   "This macro defines a uniform way of defining access to Paymill API
 resources.  See README  for usage."
   (let ((access-name (intern (symbol-name resource) :paymill)))
@@ -190,7 +188,7 @@ resources.  See README  for usage."
                                       ((inst (eql :new)) &key (data nil))
                                     (with-pm-request
                                         (drakma:http-request (pm-uri ,resource)
-                                                             :basic-authorization (list *paymill-key*) :method :post
+                                                             :basic-authorization (list ,key) :method :post
                                                              :parameters (if data (apply #'slots `(t ,@data)) nil)
                                                              :cookie-jar *cookie-jar* :want-stream t)
                                       (values (st-json:getjso "id" *pm-reply*)
@@ -203,7 +201,7 @@ resources.  See README  for usage."
                                       (error "ID is required to retrieve a resource by identifier."))
                                     (with-pm-request
                                         (drakma:http-request (pm-uri ,resource id)
-                                                             :basic-authorization (list *paymill-key*) :method :get
+                                                             :basic-authorization (list ,key) :method :get
                                                              :cookie-jar *cookie-jar* :want-stream t)
                                       *pm-reply*)))
                                 ((eql instr :update)
@@ -213,7 +211,7 @@ resources.  See README  for usage."
                                       (error "ID and DATA must be supplied to UPDATE a resource."))
                                     (with-pm-request
                                         (drakma:http-request (pm-uri ,resource id)
-                                                             :basic-authorization (list *paymill-key*) :method :put
+                                                             :basic-authorization (list ,key) :method :put
                                                              :content (x-www-form-encode-pairs data) :cookie-jar *cookie-jar* :want-stream t)
                                       *pm-reply*)))
                                 ((eql instr :delete)
@@ -223,7 +221,7 @@ resources.  See README  for usage."
                                       (error "ID must be supplied to DELETE a resource."))
                                     (with-pm-request
                                         (drakma:http-request (pm-uri ,resource id)
-                                                             :basic-authorization (list *paymill-key*) :method :delete
+                                                             :basic-authorization (list ,key) :method :delete
                                                              :cookie-jar *cookie-jar* :want-stream t)
                                       *pm-reply*)))
                                 ((eql instr :list)
@@ -236,19 +234,19 @@ resources.  See README  for usage."
                                       
                                     (with-pm-request
                                         (drakma:http-request uri
-                                                             :basic-authorization (list *paymill-key*) :method :get
+                                                             :basic-authorization (list ,key) :method :get
                                                              :cookie-jar *cookie-jar* :want-stream t)
                                       *pm-reply*))))
                                 ((eql instr :refund)
                                  `(defmethod ,access-name
-                                      ((inst (eql :list)) &key (id nil) (amount nil))
+                                      ((inst (eql :refund)) &key (id nil) (amount nil))
                                     (unless (and id amount)
                                       (error "A transaction ID and an AMOUNT are required to make a refund."))
                                     (let* ((qst (concatenate 'string "amount=" amount))
                                            (uri (pm-quri ,resource qst)))
                                       (with-pm-request
                                           (drakma:http-request uri
-                                                               :basic-authorization (list *paymill-key*) :method :get
+                                                               :basic-authorization (list ,key) :method :get
                                                                :cookie-jar *cookie-jar* :want-stream t)
                                         *pm-reply*))))
                                 (t nil)))))))

@@ -30,16 +30,17 @@
 ;;*PAYMILL-KEY* needs to be set to your private test key for testing.  If you
 ;;set it to your live key - YOU WILL BE CHARGED FOR THE TRANSACTIONS.
 
-(defun initialize-paymill (key)
-  "Call this function with your private test- or live-key to define
-access functions to the Paymill API.  If you use a live-key, you will
-be charged for any transactions which are made."
-  (setf *paymill-key* key))
+(defmacro initialize-paymill (key)
+  "Until you call this macro, the access functions are not defined.
+You should call it with a key designating your private test- or live-
+key.  If you use a live key, you get charged by Paymill."
+  `(progn
+     (define-resource-access :clients (:new :update :retrieve :list :delete) ,key)
+     (define-resource-access :payments (:new :retrieve :list :delete) ,key)
+     (define-resource-access :transactions (:new :update :retrieve :list) ,key)
+     (define-resource-access :refunds (:refund :retrieve :list) ,key)
+     (define-resource-access :offers (:new :update :retrieve :list :delete) ,key)
+     (define-resource-access :subscriptions (:new :retrieve :update :list :delete) ,key)
+     t))
 
-(define-resource-access :clients (:new :update :retrieve :list :delete))
-(define-resource-access :payments (:new :retrieve :list :delete))
-(define-resource-access :transactions (:new :update :retrieve :list))
-(define-resource-access :refunds (:refund :retrieve :list))
-(define-resource-access :offers (:new :update :retrieve :list :delete))
-(define-resource-access :subscriptions (:new :retrieve :update :list :delete))
 

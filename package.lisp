@@ -32,12 +32,12 @@
   (:nicknames :pml)
   (:export 
    ;; error reporting
-   "PAYMILL-ERROR" "PAYMILL-GENERAL-ERROR" "PAYMILL-BAD-REQUEST"
-   "PAYMILL-UNAUTHORIZED" "PAYMILL-TRANSACTION-ERROR" "PAYMILL-NOT-FOUND"
-   "PAYMILL-PRECONDITION-FAILED" "PAYMILL-SERVER-ERROR"
-   "API-INTERNAL-ERROR" "SIGNAL-PAYMILL-ERROR"
+   :paymill-error :paymill-general-error :paymill-bad-request
+   :paymill-unauthorized :paymill-transaction-error :paymill-not-found
+   :paymill-precondition-failed :paymill-server-error
+   :api-internal-error :signal-paymill-error
    ;;resources
-   "CLIENTS" "OFFERS" "PAYMENTS" 
-   "TRANSACTIONS" "REFUNDS" "SUBSCRIPTIONS"
+   :clients :offers :payments 
+   :transactions :refunds :subscriptions
    ;;initialization
-   "INITIALIZE-PAYMILL"))
+   :initialize-paymill))
