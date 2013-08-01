@@ -35,7 +35,7 @@
 
 (defvar *paymill-host* "api.paymill.com")
 
-;;Do not use this variable for anything it is used inside a macro.
+;;Do not use this variable for anything. It is bound inside a macro.
 (defvar *pm-reply*)
 
 (defvar *cookie-jar* (make-instance 'drakma:cookie-jar))
