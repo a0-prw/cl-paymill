@@ -188,7 +188,9 @@ resources.  See README  for usage."
                                       ((inst (eql :new)) &key (data nil))
                                     (with-pm-request
                                         (drakma:http-request (pm-uri ,resource)
-                                                             :basic-authorization (list ,key) :method :post
+                                                             :basic-authorization (list ,(cond ((stringp key) key)
+             ((symbolp key) (symbol-value key))
+             (t (error "Unknown key type: ~S" key)))) :method :post
                                                              :parameters (if data (apply #'slots `(t ,@data)) nil)
                                                              :cookie-jar *cookie-jar* :want-stream t)
                                       (values (st-json:getjso "id" *pm-reply*)
@@ -201,7 +203,9 @@ resources.  See README  for usage."
                                       (error "ID is required to retrieve a resource by identifier."))
                                     (with-pm-request
                                         (drakma:http-request (pm-uri ,resource id)
-                                                             :basic-authorization (list ,key) :method :get
+                                                             :basic-authorization (list ,(cond ((stringp key) key)
+             ((symbolp key) (symbol-value key))
+             (t (error "Unknown key type: ~S" key)))) :method :get
                                                              :cookie-jar *cookie-jar* :want-stream t)
                                       *pm-reply*)))
                                 ((eql instr :update)
@@ -211,7 +215,9 @@ resources.  See README  for usage."
                                       (error "ID and DATA must be supplied to UPDATE a resource."))
                                     (with-pm-request
                                         (drakma:http-request (pm-uri ,resource id)
-                                                             :basic-authorization (list ,key) :method :put
+                                                             :basic-authorization (list ,(cond ((stringp key) key)
+             ((symbolp key) (symbol-value key))
+             (t (error "Unknown key type: ~S" key)))) :method :put
                                                              :content (x-www-form-encode-pairs data) :cookie-jar *cookie-jar* :want-stream t)
                                       *pm-reply*)))
                                 ((eql instr :delete)
@@ -221,7 +227,9 @@ resources.  See README  for usage."
                                       (error "ID must be supplied to DELETE a resource."))
                                     (with-pm-request
                                         (drakma:http-request (pm-uri ,resource id)
-                                                             :basic-authorization (list ,key) :method :delete
+                                                             :basic-authorization (list ,(cond ((stringp key) key)
+             ((symbolp key) (symbol-value key))
+             (t (error "Unknown key type: ~S" key)))) :method :delete
                                                              :cookie-jar *cookie-jar* :want-stream t)
                                       *pm-reply*)))
                                 ((eql instr :list)
@@ -234,7 +242,9 @@ resources.  See README  for usage."
                                       
                                     (with-pm-request
                                         (drakma:http-request uri
-                                                             :basic-authorization (list ,key) :method :get
+                                                             :basic-authorization (list ,(cond ((stringp key) key)
+             ((symbolp key) (symbol-value key))
+             (t (error "Unknown key type: ~S" key)))) :method :get
                                                              :cookie-jar *cookie-jar* :want-stream t)
                                       *pm-reply*))))
                                 ((eql instr :refund)
@@ -246,7 +256,9 @@ resources.  See README  for usage."
                                            (uri (pm-quri ,resource qst)))
                                       (with-pm-request
                                           (drakma:http-request uri
-                                                               :basic-authorization (list ,key) :method :get
+                                                               :basic-authorization (list ,(cond ((stringp key) key)
+             ((symbolp key) (symbol-value key))
+             (t (error "Unknown key type: ~S" key)))) :method :get
                                                                :cookie-jar *cookie-jar* :want-stream t)
                                         *pm-reply*))))
                                 (t nil)))))))
