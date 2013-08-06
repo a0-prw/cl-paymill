@@ -50,41 +50,6 @@
          ((stringp sl) sl)
          (t (error "Could not normalize slot: ~S" sl))))
 
-;; (defun slots (dotted &rest slotspecs)
-;;   "This is a helper function for building appropriate parameter/body
-;; values in the resource access methods.  If dotted is T then
-;; parameters should be sent in headers, if NIL, they are sent in body.
-;; *Don't mess with that*.  If dotted is :events, then slotspecs is
-;; expected to specify a url or email which Paymill will call/mail when
-;; one of the events in the following list of EVENTS occurs. EVENTS is a
-;; list ((:EVENT1 :STATUS1) (:EVENT2 :STATUS) ...) where EVENTN and
-;; STATUSN are keywords (in which case they are converted to downcased
-;; strings before sending) or strings. See Paymill API documentation for
-;; 'Webhooks' for types of events, and their statuses, which can be
-;; specified."
-;;   (labels ((rec (rst &optional (ret nil))
-;;              (if (null rst) ret
-;;                  (let ((sl (normalize-slot (car rst)))
-;;                        (val (cadr rst)))
-;;                    (rec (cddr rst) (cons (if dotted 
-;;                                       (cons sl val)
-;;                                       (list sl val))
-;;                                   ret))))))
-;;     (if (eql dotted :events)
-;;         (destructuring-bind ((whtype value events))
-;;             slotspecs
-;;           `((,(normalize-slot whtype) . ,value)
-;;             ,@(mapcar (lambda (spec)
-;;                         (destructuring-bind (event status)
-;;                             spec
-;;                           (cons "event_types[]" 
-;;                                 (concatenate 'string
-;;                                              (normalize-slot event) 
-;;                                              "."
-;;                                              (normalize-slot status)))))
-;;                       events)))
-;;         (rec slotspecs))))
-
 (defun webhook-slots (slotspecs)
   (destructuring-bind (dotted (whtype value events))
             slotspecs
@@ -118,17 +83,6 @@
                       (cons sl val)
                       (list sl val)))))
             specs)))
-
-;; (defun slots (dotted &rest pairs)
-;;   (labels ((rec (rst &optional (ret nil))
-;;              (if (null rst) ret
-;;                  (let ((sl (normalize-slot (car rst)))
-;;                        (val (cadr rst)))
-;;                    (rec (cddr rst) (cons (if dotted 
-;;                                       (cons sl val)
-;;                                       (list sl val))
-;;                                   ret))))))
-;;     (rec pairs)))
 
 (defun x-www-form-encode-pairs (slotsp data)
   ;;Why did I make this &rest ??? fixme
@@ -356,93 +310,4 @@ resources.  See README  for usage."
                                                                :want-stream t)
                                         *pm-reply*))))
                                 (t nil)))))))
-
-
-;; (defmacro define-resource-access (resource instr-list key)
-;;   "This macro defines a uniform way of defining access to Paymill API
-;; resources.  See README  for usage."
-;;   (let ((access-name (intern (symbol-name resource) :paymill)))
-;;     `(progn (defgeneric ,access-name (instruction &key &allow-other-keys))
-;;             ,@(remove-if 
-;;                #'null 
-;;                (loop for instr in instr-list
-;;                   collect (cond ((eql instr :new)
-;;                                  `(defmethod ,access-name
-;;                                       ((inst (eql :new)) &key (data nil))
-;;                                     (with-pm-request
-;;                                         (drakma:http-request (pm-uri ,resource)
-;;                                                              :basic-authorization (list ,(cond ((stringp key) key)
-;;                                                                                                ((symbolp key) (symbol-value key))
-;;                                                                                                (t (error "Unknown key type: ~S" key)))) :method :post
-;;                                                                                                :parameters (if data (apply #'slots `(t ,@data)) nil)
-;;                                                                                                :cookie-jar *cookie-jar* :want-stream t)
-;;                                       (values (st-json:getjso "id" *pm-reply*)
-;;                                               *pm-reply*))))
-                                
-;;                                 ((eql instr :retrieve)
-;;                                  `(defmethod ,access-name
-;;                                       ((inst (eql :retrieve)) &key (id nil)) ;; &allow-other-keys)
-;;                                     (unless id
-;;                                       (error "ID is required to retrieve a resource by identifier."))
-;;                                     (with-pm-request
-;;                                         (drakma:http-request (pm-uri ,resource id)
-;;                                                              :basic-authorization (list ,(cond ((stringp key) key)
-;;                                                                                                ((symbolp key) (symbol-value key))
-;;                                                                                                (t (error "Unknown key type: ~S" key)))) :method :get
-;;                                                                                                :cookie-jar *cookie-jar* :want-stream t)
-;;                                       *pm-reply*)))
-;;                                 ((eql instr :update)
-;;                                  `(defmethod ,access-name
-;;                                       ((inst (eql :update)) &key (id nil) (data nil))
-;;                                     (unless (and id data)
-;;                                       (error "ID and DATA must be supplied to UPDATE a resource."))
-;;                                     (with-pm-request
-;;                                         (drakma:http-request (pm-uri ,resource id)
-;;                                                              :basic-authorization (list ,(cond ((stringp key) key)
-;;                                                                                                ((symbolp key) (symbol-value key))
-;;                                                                                                (t (error "Unknown key type: ~S" key)))) :method :put
-;;                                                                                                :content (x-www-form-encode-pairs data) :cookie-jar *cookie-jar* :want-stream t)
-;;                                       *pm-reply*)))
-;;                                 ((eql instr :delete)
-;;                                  `(defmethod ,access-name
-;;                                       ((inst (eql :delete)) &key (id nil))
-;;                                     (unless id
-;;                                       (error "ID must be supplied to DELETE a resource."))
-;;                                     (with-pm-request
-;;                                         (drakma:http-request (pm-uri ,resource id)
-;;                                                              :basic-authorization (list ,(cond ((stringp key) key)
-;;                                                                                                ((symbolp key) (symbol-value key))
-;;                                                                                                (t (error "Unknown key type: ~S" key)))) :method :delete
-;;                                                                                                :cookie-jar *cookie-jar* :want-stream t)
-;;                                       *pm-reply*)))
-;;                                 ((eql instr :list)
-;;                                  `(defmethod ,access-name
-;;                                       ((inst (eql :list)) &key (slot nil) (ascending t))
-;;                                     (let* ((qst (if slot (concatenate 'string "order="
-;;                                                                       (string-downcase (symbol-name slot)) 
-;;                                                                       (if ascending "_asc" "_desc")) ""))
-;;                                            (uri (pm-quri ,resource qst)))
-                                      
-;;                                       (with-pm-request
-;;                                           (drakma:http-request uri
-;;                                                                :basic-authorization (list ,(cond ((stringp key) key)
-;;                                                                                                  ((symbolp key) (symbol-value key))
-;;                                                                                                  (t (error "Unknown key type: ~S" key)))) :method :get
-;;                                                                                                  :cookie-jar *cookie-jar* :want-stream t)
-;;                                         *pm-reply*))))
-;;                                 ((eql instr :refund)
-;;                                  `(defmethod ,access-name
-;;                                       ((inst (eql :refund)) &key (id nil) (amount nil))
-;;                                     (unless (and id amount)
-;;                                       (error "A transaction ID and an AMOUNT are required to make a refund."))
-;;                                     (let* ((qst (concatenate 'string "amount=" amount))
-;;                                            (uri (pm-quri ,resource qst)))
-;;                                       (with-pm-request
-;;                                           (drakma:http-request uri
-;;                                                                :basic-authorization (list ,(cond ((stringp key) key)
-;;                                                                                                  ((symbolp key) (symbol-value key))
-;;                                                                                                  (t (error "Unknown key type: ~S" key)))) :method :get
-;;                                                                                                  :cookie-jar *cookie-jar* :want-stream t)
-;;                                         *pm-reply*))))
-;;                                 (t nil)))))))
 
