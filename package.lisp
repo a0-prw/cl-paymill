@@ -39,5 +39,6 @@
    ;;resources
    :clients :offers :payments 
    :transactions :refunds :subscriptions
+   :webhooks
    ;;initialization
    :initialize-paymill))

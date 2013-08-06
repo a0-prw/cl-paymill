@@ -41,6 +41,7 @@ key.  If you use a live key, you get charged by Paymill."
      (define-resource-access :refunds (:refund :retrieve :list) ,key)
      (define-resource-access :offers (:new :update :retrieve :list :delete) ,key)
      (define-resource-access :subscriptions (:new :retrieve :update :list :delete) ,key)
+     (define-resource-access :webhooks (:new :update :retrieve :list :delete) ,key)
      t))
 
 
