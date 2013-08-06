@@ -118,13 +118,14 @@ method.  Sorry.
 The following resources are currently accessible, all exported from
 the PAYMILL package:
 
-CLIENTS, TRANSACTIONS, REFUNDS, PAYMENTS, SUBSCRIPTIONS, OFFERS
+CLIENTS, TRANSACTIONS, REFUNDS, PAYMENTS, SUBSCRIPTIONS, OFFERS,
+WEBHOOKS
 
 Note:
 
 You need to look at st-json as well, but it's nice and simple, and
 easy to use.  You might want to build the interface up towards your
 app.  For example: define (new-client &optional ...), (new-payment
-...) etc.  Thats what I do.  Some parts of the API do not have an
-interface yet, (webhooks) but it should be very easy to add.
+...) etc.  Thats what I do.  The webhooks interface is new, but tests
+suggest it is working.
 
