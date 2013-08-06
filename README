@@ -54,8 +54,9 @@ All access has this general form:
 
 PML:RESOURCE (ACCESS-TYPE &KEY [ID] [DATA])
 
-Where RESOURCE is a generic function, ACCESS-TYPE is a keyword, optional ID is
-a string, and optional DATA is a list (SLOT1 VALUE1 SLOT2 VALUE2 ...)
+Where RESOURCE is a generic function, ACCESS-TYPE is a keyword,
+optional ID is a string, and optional DATA is for all resources
+*except WEBHOOKS* (see below), a list (SLOT1 VALUE1 SLOT2 VALUE2 ...)
 where SLOTN can be a string or a keyword and VALUEN is a string.  If
 SLOTN is a keyword, it is converted to a lowercase string before
 sending the request to paymill.  ACCESS-TYPE determines how the
@@ -66,6 +67,13 @@ The possible values for SLOTN depend on the resource which is being
 accessed. As you have seen in the examples, CLIENTS have settable
 slots "email" and "description". See the Paymill API docs for other
 possible values of SLOTN.
+
+For WEBHOOKS, DATA is a list which looks like '(:EMAIL <string email>
+((:EVENT1 :STATUS1) (:EVENT2 :STATUS) ...)) OR '(:URL <string url>
+((:EVENT1 :STATUS1) (:EVENT2 :STATUS) ...)). All keywords are
+converted to downcased strings, and can be replaced by strings in
+calls to the resource. See the Paymill API docs for WEBHOOKS for
+possible events and statuses.
 
 The return value(s) also depend on ACCESS-TYPE. Accessing a resource
 with 
@@ -79,7 +87,9 @@ the objects of that type.  <Aside: from now on, I am not going to
 bother to write 'an st-json representation of ...' You know what I
 mean.>
 
-:DELETE returns the deleted object (an st-json rep ...)
+:DELETE returns the object (an st-json rep ...) in the "data" slot
+which Paymill returns from the request.  In most cases this is :NULL.
+Deleting a CLIENT or a SUBSCRIPTION returns the deleted object.
 
 :RETRIEVE returns the object
 
