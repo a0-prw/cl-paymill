@@ -72,17 +72,34 @@
                                                  (normalize-slot status))))))
                       events))))
 
+(defun in-pairs (lst)
+  (labels ((pair (rst acc)
+             (if (null rst)
+                 (nreverse acc)
+                 (pair (cddr rst) (cons (list (car rst) (cadr rst)) acc)))))
+    (if (evenp (length lst))
+        (pair lst nil)
+        (error "LST must be var value pairs."))))
+
+(defun normalize-interval (interval)
+  (destructuring-bind (period time)
+      interval
+    (format nil "~D ~A" period (string-upcase (symbol-name time)))))
+
 (defun slots (slotspecs)
   (destructuring-bind (dotted specs)
       slotspecs
     (mapcar (lambda (spec)
               (destructuring-bind (var val)
                   spec
-                (let ((sl (normalize-slot var)))
+                (let ((val (if (eql var :interval)
+                               (normalize-interval val)
+                               val))
+                      (sl (normalize-slot var)))
                   (if dotted
                       (cons sl val)
                       (list sl val)))))
-            specs)))
+            (in-pairs specs))))
 
 (defun x-www-form-encode-pairs (slotsp data)
   ;;Why did I make this &rest ??? fixme
