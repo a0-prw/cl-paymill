@@ -1,10 +1,12 @@
+PLEASE NOTE THE FOLLOWING IN ADDITION TO THE USUAL DISCLAIMERS THAT
+ACCOMPANY FREE SOFTWARE: THE RELEASE OF THIS LIBRARY IN NO WAY IMPLIES
+AN ENDORSMENT OF THE PAYMILL PAYMENT SERVICE. BE CAREFUL OUT THERE.
+
 CL-PAYMILL provides an interface to the Paymill payment service API.
 You should definitely read their documentation in order to use their
 service.  Ie, do NOT just rely on what is written here.  You use this
 interface entirely at your own risk, as stated in the licence.  Not
-everything in here is robustly tested, since my own app does not use
-all the functions.  So YOU should definitely test everything you
-plan on using WITH YOUR TEST-KEY before going live.
+everything in here is robustly tested.
 
 INSTALLING:
 
